@@ -5,6 +5,8 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -19,8 +21,12 @@ import com.clj.fastble.callback.BleWriteCallback;
 import com.clj.fastble.data.BleDevice;
 import com.clj.fastble.exception.BleException;
 import com.clj.fastble.scan.BleScanRuleConfig;
-import com.example.lunar.hackspaceprogram.R;
 
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -52,8 +58,11 @@ public class MainActivity extends Activity {
         passw = findViewById(R.id.editTextpassword);
         loginb = findViewById(R.id.buttonLogin);
         ////////////////////////////////////////////////////////////////////////////////
+        WifiManager manager = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
+        WifiInfo info = manager.getConnectionInfo();
+        String address = info.getMacAddress();
 
-        str = "login "+String.valueOf(login.getText())+" passw "+String.valueOf(passw.getText());//todo:messege for server
+        str = address;
 
         //////////////////////////
         BleManager.getInstance().init(getApplication());
@@ -72,27 +81,6 @@ public class MainActivity extends Activity {
             Toast.makeText(this,"your phone not support ble, you are lox", Toast.LENGTH_SHORT).show();
         }
 
-//        BleManager.getInstance().connect(pi, new BleGattCallback() {
-//            @Override
-//            public void onStartConnect() {
-//                Log.d(TAG,"starting connect...");
-//            }
-//
-//            @Override
-//            public void onConnectFail(BleDevice bleDevice, BleException exception) {
-//                Log.d(TAG,"fail to connect!");
-//            }
-//
-//            @Override
-//            public void onConnectSuccess(BleDevice bleDevice, BluetoothGatt gatt, int status) {
-//                Log.d(TAG,"success to connect!");
-//            }
-//
-//            @Override
-//            public void onDisConnected(boolean isActiveDisConnected, BleDevice bleDevice, BluetoothGatt gatt, int status) {
-//
-//            }
-//        });
 
         loginb.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -151,12 +139,11 @@ public class MainActivity extends Activity {
     }
 
     Boolean loginnow(String login, String passw){
-//        if(login==passw&&login=="admin"){
-//            return true;
-//        }
-//        return false;//todo: login system
+        byte[] bytes = fetchdata(login,passw);
+        String s = new String(bytes);
+        Log.e(TAG, s);
 
-        return true;
+        return false;//todo: login system
     }
 
     void push(){
@@ -208,6 +195,28 @@ public class MainActivity extends Activity {
                 }
             });
 
+            BleManager.getInstance().connect(pi, new BleGattCallback() {
+                @Override
+                public void onStartConnect() {
+                    Log.d(TAG,"starting connect...");
+                }
+
+                @Override
+                public void onConnectFail(BleDevice bleDevice, BleException exception) {
+                    Log.d(TAG,"fail to connect!");
+                }
+
+                @Override
+                public void onConnectSuccess(BleDevice bleDevice, BluetoothGatt gatt, int status) {
+                    Log.d(TAG,"success to connect!");
+                }
+
+                @Override
+                public void onDisConnected(boolean isActiveDisConnected, BleDevice bleDevice, BluetoothGatt gatt, int status) {
+
+                }
+            });
+
             BleManager.getInstance().connect(sampleMac, new BleGattCallback() {
                 @Override
                 public void onStartConnect() {
@@ -248,5 +257,50 @@ public class MainActivity extends Activity {
             startActivity(new Intent(this,DoingActivity.class));
         }
     }
+}
+byte[] fetchdata(String login, String passw){
+    String myURL = "http://profile.goto.msk.ru/graphhq1";
+
+    String firstjson
+
+
+    String params = "login="+login+"&password="+passw;
+    byte[] data = null;
+    InputStream is = null;
+
+    try {
+        URL url = new URL(myURL);
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("POST");
+        conn.setDoOutput(true);
+        conn.setDoInput(true);
+
+        conn.setRequestProperty("Content-Length", "" + Integer.toString(params.getBytes().length));
+        OutputStream os = conn.getOutputStream();
+        data = params.getBytes("UTF-8");
+        os.write(data);
+        data = null;
+
+        conn.connect();
+        int responseCode= conn.getResponseCode();
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        is = conn.getInputStream();
+
+        byte[] buffer = new byte[8192]; // Такого вот размера буфер
+        // Далее, например, вот так читаем ответ
+        int bytesRead;
+        while ((bytesRead = is.read(buffer)) != -1) {
+            baos.write(buffer, 0, bytesRead);
+        }
+        data = baos.toByteArray();
+    } catch (Exception e) {
+    } finally {
+        try {
+            if (is != null)
+                is.close();
+        } catch (Exception ex) {}
+    }
+    return data;
 }
 }
