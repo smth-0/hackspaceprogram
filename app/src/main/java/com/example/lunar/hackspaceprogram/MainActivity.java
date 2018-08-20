@@ -77,8 +77,8 @@ public class MainActivity extends Activity {
                 .setScanTimeOut(10000)
                 .build();
         BleManager.getInstance().initScanRule(scanRuleConfig);
-        if(!BleManager.getInstance().isSupportBle()){
-            Toast.makeText(this,"your phone not support ble, you are lox", Toast.LENGTH_SHORT).show();
+        if (!BleManager.getInstance().isSupportBle()) {
+            Toast.makeText(this, "your phone not support ble, you are lox", Toast.LENGTH_SHORT).show();
         }
 
 
@@ -95,7 +95,7 @@ public class MainActivity extends Activity {
                                 )
                         )) {
                     bool = true;
-                    Log.d(TAG,"access is"+bool);
+                    Log.d(TAG, "access is" + bool);
                     push();
                 }
 
@@ -103,28 +103,25 @@ public class MainActivity extends Activity {
         });
 
 
-
-    ////////////////////////////////////////////////////////////////////////////////
-    //todo: any things to do in start up
-
+        ////////////////////////////////////////////////////////////////////////////////
+        //todo: any things to do in start up
 
 
+        ////////////////////////////////////////////////////////////////////////////////
 
-
-    ////////////////////////////////////////////////////////////////////////////////
-
-}
+    }
 
 
     protected void onDestroy() {
         super.onDestroy();
-        if(bool){
+        if (bool) {
             saveText("ALREADY_LOGGED_IN");
         } else {
             saveText("NOT_ALREADY_LOGGED_IN");
         }
         BleManager.getInstance().disconnectAllDevice();
     }
+
     void saveText(String text) {
         SharedPreferences sPref = getPreferences(MODE_PRIVATE);
         SharedPreferences.Editor ed = sPref.edit();
@@ -138,33 +135,41 @@ public class MainActivity extends Activity {
         return savedText;
     }
 
-    Boolean loginnow(String login, String passw){
-        byte[] bytes = fetchdata(login,passw);
-        String s = new String(bytes);
-        Log.e(TAG, s);
+    Boolean loginnow(String login, String passw) {
 
-        return false;//todo: login system
+//        if(login=="dots"&&passw=="dots"){
+//            return true;
+//        }
+//       else if(login=="admin"&&passw=="admin"){
+//            return true;
+//        }
+//        else if(login=="hacker"&&passw=="hacker"){
+//            return true;
+//        } else {
+//            return  false;
+//        }
+        return true;
     }
 
-    void push(){
+    void push() {
 
-    BleDevice pi = null;
+        BleDevice pi = null;
 
-        for(int i=0;i<scanList.size();i++){
-            if(scanList.get(i).getName().equals(sampleName)){
+        for (int i = 0; i < scanList.size(); i++) {
+            if (scanList.get(i).getName().equals(sampleName)) {
                 pi = scanList.get(i);
             }
         }
 
-        try{
-            if(pi==null){
+        try {
+            if (pi == null) {
                 Log.e(TAG, "just not enough device!");
             }
-        } catch (NullPointerException e ){
-            Log.e(TAG,e.toString());
+        } catch (NullPointerException e) {
+            Log.e(TAG, e.toString());
         }
 
-        if(bool) {
+        if (bool) {
             BleManager.getInstance().scan(new BleScanCallback() {
                 @Override
                 public void onScanStarted(boolean success) {
@@ -177,7 +182,7 @@ public class MainActivity extends Activity {
 
                 @Override
                 public void onScanning(BleDevice bleDevice) {
-                    Log.d(TAG,"device detected! name is : '"+bleDevice.getName()+"' and mac is '"+bleDevice.getMac()+"';");
+                    Log.d(TAG, "device detected! name is : '" + bleDevice.getName() + "' and mac is '" + bleDevice.getMac() + "';");
 
                     scanList.add(bleDevice);
 
@@ -185,11 +190,11 @@ public class MainActivity extends Activity {
 
                 @Override
                 public void onScanFinished(List<BleDevice> scanResultList) {
-                    for(int i=0;i<scanResultList.size();i++){
+                    for (int i = 0; i < scanResultList.size(); i++) {
                         BleDevice bleDevice = scanResultList.get(i);
-                        Log.d(TAG,"device detected! name is : '"+bleDevice.getName()+"' and mac is '"+bleDevice.getMac()+"';");
+                        Log.d(TAG, "device detected! name is : '" + bleDevice.getName() + "' and mac is '" + bleDevice.getMac() + "';");
                     }
-                    Log.d(TAG,"isempty1"+scanResultList.isEmpty()+"|isempty2:"+scanList.isEmpty());
+                    Log.d(TAG, "isempty1" + scanResultList.isEmpty() + "|isempty2:" + scanList.isEmpty());
                     Log.d(TAG, "scan finished!");
 
                 }
@@ -198,17 +203,17 @@ public class MainActivity extends Activity {
             BleManager.getInstance().connect(pi, new BleGattCallback() {
                 @Override
                 public void onStartConnect() {
-                    Log.d(TAG,"starting connect...");
+                    Log.d(TAG, "starting connect...");
                 }
 
                 @Override
                 public void onConnectFail(BleDevice bleDevice, BleException exception) {
-                    Log.d(TAG,"fail to connect!");
+                    Log.d(TAG, "fail to connect!");
                 }
 
                 @Override
                 public void onConnectSuccess(BleDevice bleDevice, BluetoothGatt gatt, int status) {
-                    Log.d(TAG,"success to connect!");
+                    Log.d(TAG, "success to connect!");
                 }
 
                 @Override
@@ -245,7 +250,7 @@ public class MainActivity extends Activity {
                     new BleWriteCallback() {
                         @Override
                         public void onWriteSuccess(int current, int total, byte[] justWrite) {
-                            Log.e(TAG,  "success");
+                            Log.e(TAG, "success");
                         }
 
                         @Override
@@ -253,54 +258,9 @@ public class MainActivity extends Activity {
                             Log.e(TAG, "failed to connect");
                         }
                     });
-        if(bool){
-            startActivity(new Intent(this,DoingActivity.class));
+            if (bool) {
+                startActivity(new Intent(this, DoingActivity.class));
+            }
         }
     }
-}
-byte[] fetchdata(String login, String passw){
-    String myURL = "http://profile.goto.msk.ru/graphhq1";
-
-    String firstjson
-
-
-    String params = "login="+login+"&password="+passw;
-    byte[] data = null;
-    InputStream is = null;
-
-    try {
-        URL url = new URL(myURL);
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        conn.setRequestMethod("POST");
-        conn.setDoOutput(true);
-        conn.setDoInput(true);
-
-        conn.setRequestProperty("Content-Length", "" + Integer.toString(params.getBytes().length));
-        OutputStream os = conn.getOutputStream();
-        data = params.getBytes("UTF-8");
-        os.write(data);
-        data = null;
-
-        conn.connect();
-        int responseCode= conn.getResponseCode();
-
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        is = conn.getInputStream();
-
-        byte[] buffer = new byte[8192]; // Такого вот размера буфер
-        // Далее, например, вот так читаем ответ
-        int bytesRead;
-        while ((bytesRead = is.read(buffer)) != -1) {
-            baos.write(buffer, 0, bytesRead);
-        }
-        data = baos.toByteArray();
-    } catch (Exception e) {
-    } finally {
-        try {
-            if (is != null)
-                is.close();
-        } catch (Exception ex) {}
-    }
-    return data;
-}
 }
